@@ -1,6 +1,7 @@
-from typing import Union
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from database import engine, Sessionlocal, Base
+from sqlalchemy.orm import Session
+from models import Item, Recipe
 
 import models
 
@@ -19,11 +20,17 @@ def get_db():
 def read_root():
     return {"Hello": "World"}
 
+@app.post("/items")
+def create_item(name: str, price:float, db: Session = Depends(get_db)):
+    item = Item(name = name, price = price)
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
 
 @app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
-
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: models.Item):
-    return {"item_name": item.name, "item_id": item_id}
+def show_item(item_id:int, db: Session = Depends(get_db)):
+    item = db.query(Item).filter(Item.id == item_id).first()
+    if item is None:
+        raise HTTPException(status_code=404, detail="Items not Found")
+    return item
