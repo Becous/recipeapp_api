@@ -1,10 +1,19 @@
 from typing import Union
-
 from fastapi import FastAPI
+from database import engine, Sessionlocal, Base
+
 import models
 
 app = FastAPI()
 
+Base.metadata.create_all(bind=engine)
+
+def get_db():
+    db = Sessionlocal()
+    try: 
+        yield db
+    except: 
+        db.close()
 
 @app.get("/")
 def read_root():
