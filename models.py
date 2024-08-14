@@ -16,10 +16,9 @@ class User(Base):
     name = Column(String)
     surname = Column(String)
     password = Column(String)
-    recipe = Column()
-
-    saved_recipe = relationship("SaveRecipe", back_populates="user", cascade="all, delete")
-    comment = relationship("Comment", back_populates="user", cascade="all, delete")
+    
+    saved_recipes = relationship("SavedRecipe", back_populates="user", cascade="all, delete")
+    comments = relationship("Comment", back_populates="user", cascade="all, delete")
 
 
 class Recipe(Base):
@@ -31,7 +30,8 @@ class Recipe(Base):
     desc = Column(String)
     time_cook = Column(Integer)
     
-    saved_by_user = relationship("SavedRecipe", back_populates="recipe", cascade="all, delete")
+    saved_by_users = relationship("SavedRecipe", back_populates="recipe", cascade="all, delete")
+    comments = relationship("Comment", back_populates="recipe", cascade="all, delete")
 
 
 class Comment(Base):
@@ -47,13 +47,10 @@ class Comment(Base):
 
 class SavedRecipe(Base):
     __tablename__ = "saved_recipe"
+    
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     recipe_id = Column(Integer, ForeignKey("recipe.id"))
 
-    user = relationship("User", back_populates="comments")
-    recipe = relationship("Recipe", back_populates="comments")
-
-    
-
-    
+    user = relationship("User", back_populates="saved_recipes")
+    recipe = relationship("Recipe", back_populates="saved_by_users")

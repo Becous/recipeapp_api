@@ -41,3 +41,24 @@ def show_item(db: Session = Depends(get_db)):
     if item is None:
         raise HTTPException(status_code=404, detail="Items not Found")
     return item
+
+@app.delete("/items/")
+def delete_item(item_id:int, db: Session = Depends(get_db)):
+    item = db.query(Item).filter(Item.id == item_id).first()
+    db.delete(item)
+    db.commit()
+
+    return item
+
+@app.put("/items/{item_id}/update")
+def update_item(item_id: int,name: str, price: float, db: Session = Depends(get_db)):
+    item = db.query(Item).filter(Item.id == item_id).first()
+    if item:
+        item.name = name
+        item.price = price
+        db.commit()
+        db.refresh(item)
+    else: 
+        raise HTTPException(status_code=404, detail="Items not Found")
+    
+    return item
