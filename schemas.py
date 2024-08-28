@@ -1,19 +1,23 @@
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-class ItemBase(BaseModel):
-    name: str
-    price: float
+# schemas.py
 
-class ItemCreate(ItemBase):
+class CommentBase(BaseModel):
+    text: str
+    user_id: Optional[int]
+    recipe_id: int
+
+class CommentCreate(CommentBase):
     pass
 
-class Item(ItemBase):
+class CommentInRecipe(CommentBase):
     id: int
+    user_id: Optional[int]  # Не включаємо повний об'єкт User
+    recipe_id: int
 
     class Config:
         orm_mode = True
-
 
 class UserBase(BaseModel):
     name: str
@@ -22,10 +26,8 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     password: str
 
-class User(UserBase):
+class UserInComment(UserBase):
     id: int
-    saved_recipes: List['SavedRecipe'] = []
-    comments: List['Comment'] = []
 
     class Config:
         orm_mode = True
@@ -39,32 +41,38 @@ class RecipeBase(BaseModel):
 class RecipeCreate(RecipeBase):
     pass
 
+class RecipeInComment(RecipeBase):
+    id: int
+
+    class Config:
+        orm_mode = True
+
+# Повні схеми для серіалізації
+class Comment(CommentBase):
+    id: int
+    user: Optional[UserInComment]
+    recipe: Optional[RecipeInComment]
+
+    class Config:
+        orm_mode = True
+
+class User(UserBase):
+    id: int
+    saved_recipes: List['SavedRecipe'] = []
+    comments: List[CommentInRecipe] = []  # Використовуємо скорочену схему
+
+    class Config:
+        orm_mode = True
+
 class Recipe(RecipeBase):
     id: int
     saved_by_users: List['SavedRecipe'] = []
-    comments: List['Comment'] = []
+    comments: List[CommentInRecipe] = []  # Використовуємо скорочену схему
 
     class Config:
         orm_mode = True
 
-
-class CommentBase(BaseModel):
-    text: str
-    user_id: Optional[int]
-    recipe_id: int
-
-class CommentCreate(CommentBase):
-    pass
-
-class Comment(CommentBase):
-    id: int
-    user: Optional[User]
-    recipe: Optional[Recipe]
-
-    class Config:
-        orm_mode = True
-
-
+# SavedRecipe схеми
 class SavedRecipeBase(BaseModel):
     user_id: int
     recipe_id: int
@@ -74,8 +82,8 @@ class SavedRecipeCreate(SavedRecipeBase):
 
 class SavedRecipe(SavedRecipeBase):
     id: int
-    user: User
-    recipe: Recipe
+    user: UserInComment  # Використовуємо скорочену схему
+    recipe: RecipeInComment  # Використовуємо скорочену схему
 
     class Config:
         orm_mode = True
